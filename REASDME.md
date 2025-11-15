@@ -1,5 +1,11 @@
 # 📦 RAST DB Backup
 
+[![Issues](https://img.shields.io/github/issues/raihanafroz/dbbackup?style=flat-square)](https://github.com/raihanafroz/dbbackup/issues)
+[![Forks](https://img.shields.io/github/forks/raihanafroz/dbbackup?style=flat-square)](https://github.com/raihanafroz/dbbackup/network/members)
+[![Stars](https://img.shields.io/github/stars/raihanafroz/dbbackup?style=flat-square)](https://github.com/raihanafroz/dbbackup/stargazers)
+[![Total Downloads](https://img.shields.io/packagist/dt/rast/dbbackup?style=flat-square)](https://packagist.org/packages/rast/dbbackup)
+[![License](https://poser.pugx.org/rast/dbbackup/license.svg)](https://packagist.org/packages/rast/dbbackup)
+
 A lightweight Laravel package for creating MySQL database backups via CLI or scheduler.
 
 **Features:**
@@ -24,26 +30,11 @@ A lightweight Laravel package for creating MySQL database backups via CLI or sch
 
 ### 1. Add the package to your project
 
-If using a local package:
 
-```json
-// composer.json
-"repositories": [
-  {
-    "type": "path",
-    "url": "packages/RAST/dbbackup"
-  }
-],
-"require": {
-  "rast/dbbackup": "*"
-}
-```
 
-Then run:
 
 ```bash
-composer dump-autoload
-composer install
+composer require rast/dbbackup
 ```
 
 ### 2. Register the Service Provider
