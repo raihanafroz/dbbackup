@@ -8,51 +8,55 @@ use Exception;
 
 class DbBackupCommand extends Command
 {
-  /**
-   * Artisan command signature.
-   *
-   * Options:
-   *  --no-zip       Run backup without compression
-   *  --no-email     Skip sending email
-   *  --no-clean     Skip deleting old backups
-   */
   protected $signature = 'rast:db-backup
-                            {--no-zip : Disable compression for this backup}
+                            {--restore= : Path to .sql or .zip file to restore}
+                            {--no-zip : Disable compression for backup}
                             {--no-email : Do not send backup email}
                             {--no-clean : Skip cleaning old backups}';
 
-  /**
-   * Command description.
-   */
-  protected $description = 'Backup MySQL database into the storage folder with optional compression, cleanup, and email.';
+  protected $description = 'Backup or restore MySQL database with optional compression, cleanup, and email.';
 
-  /**
-   * Execute the command.
-   */
   public function handle(): void
   {
-    $this->info("Starting database backup...");
-    $this->line("");
+    $service = new BackupService();
 
     try {
-      $service = new BackupService();
 
-      // Run backup with temporary options
-      $path = $service->run([
+      // ---- RESTORE MODE ----
+      if ($this->option('restore')) {
+        $path = $this->option('restore');
+
+        $this->info("Starting database restore...");
+        $this->line("");
+
+        $restoredFile = $service->run([
+          'restore' => $path
+        ]);
+
+        $this->newLine();
+        $this->info("✔ Restore completed successfully!");
+        $this->comment("Restored from: $restoredFile");
+        return;
+      }
+
+      // ---- BACKUP MODE ----
+      $this->info("Starting database backup...");
+      $this->line("");
+
+      $backupPath = $service->run([
         'no_zip'   => $this->option('no-zip'),
         'no_email' => $this->option('no-email'),
-        'no_clean' => $this->option('no-clean')
+        'no_clean' => $this->option('no-clean'),
       ]);
 
       $this->newLine();
       $this->info("✔ Backup completed successfully!");
-      $this->line("File saved at: ");
-      $this->comment($path);
+      $this->comment("File saved at: $backupPath");
 
     } catch (Exception $e) {
 
       $this->newLine();
-      $this->error("✘ Backup failed!");
+      $this->error("✘ Operation failed!");
       $this->line($e->getMessage());
     }
   }
