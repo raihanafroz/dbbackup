@@ -121,7 +121,7 @@ MYSQL_DUMP_PATH=/usr/bin/mysqldump
 ```
 
 > On cPanel/shared hosting: usually `/usr/bin/mysqldump`
-> On Windows/XAMPP: `C:/xampp/mysql/bin/mysqldump.exe`
+> On Windows/XAMPP: `C:/xampp/mysql/bin`
 
 ---
 
@@ -156,13 +156,13 @@ php artisan rast:db-backup --no-zip --no-email
 
 Restore Example: 
 ```bash
-php artisan rast:db-backup --restore=/path/to/backup.sql
+php artisan rast:db-backup --restore=backup.sql
 ```
  * Supports .sql and .zip backups
  * Automatically extracts .zip before restoring
 
 ```bash
-php artisan rast:db-backup --restore=storage/app/db_backups/backup_mydb_2025_11_15_173027.sql.zip
+php artisan rast:db-backup --restore=backup_mydb_2025_11_15_173027.sql.zip
 ```
 
 ### 3. Scheduling Backups

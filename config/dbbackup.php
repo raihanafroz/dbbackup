@@ -23,13 +23,13 @@ return [
   | Full path to mysqldump. On Windows, set the EXE path.
   | Example for XAMPP:
   |  On Windows
-  |   MYSQL_DUMP_PATH="C:/xampp/mysql/bin/mysqldump.exe"
+  |   MYSQL_DUMP_PATH="C:/xampp/mysql/bin"
   |
   |  On cPanel/shared hosting: usually
   |   MYSQL_DUMP_PATH="/usr/bin/mysqldump"
   */
 
-  'mysqldump_path' => env('MYSQL_DUMP_PATH', 'C:/xampp/mysql/bin/mysqldump.exe'),
+  'mysql_path' => env('MYSQL_DUMP_PATH', 'C:/xampp/mysql/bin'),
 
 
   /*

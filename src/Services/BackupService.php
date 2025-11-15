@@ -6,8 +6,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
-class BackupService
-{
+class BackupService {
 
   /**
    * Run the backup or restore process
@@ -21,61 +20,20 @@ class BackupService
    * @return string Path of backup file (or restored file)
    * @throws \Exception
    */
-  public function run(array $options = []): string
-  {
+  public function run(array $options = []): string {
     $config = config('dbbackup');
     $db = config('database.connections.mysql');
 
-    // ---- RESTORE ----
     if (!empty($options['restore'])) {
-      $filePath = $options['restore'];
-
-      if (!File::exists($filePath)) {
-        throw new \Exception("Restore file not found: $filePath");
-      }
-
-      // If zip, extract first
-      if (pathinfo($filePath, PATHINFO_EXTENSION) === 'zip') {
-        $zip = new \ZipArchive;
-        if ($zip->open($filePath) === TRUE) {
-          $extractPath = dirname($filePath) . '/restore_' . time() . '.sql';
-          $zip->extractTo(dirname($filePath), basename($filePath, '.zip') . '.sql');
-          $zip->close();
-          $filePath = dirname($filePath) . '/' . basename($filePath, '.zip') . '.sql';
-        } else {
-          throw new \Exception("Cannot open zip file: $filePath");
-        }
-      }
-
-      // Build restore command
-      $cmd = sprintf(
-        '"mysql" --user=%s --password=%s --host=%s --port=%s %s < "%s"',
-        $db['username'],
-        $db['password'],
-        $db['host'],
-        $db['port'] ?? 3306,
-        $db['database'],
-        $filePath
-      );
-
-      exec($cmd, $output, $returnVar);
-
-      if ($returnVar !== 0) {
-        throw new \Exception("Database restore failed. Command returned code $returnVar.");
-      }
-
-      if ($config['logging']) {
-        Log::info("DB Restored from: " . $filePath);
-      }
-
-      return $filePath;
+      return $this->restoreFromBackup($config, $options['restore']);
     }
+
 
     // ---- BACKUP ----
     return $this->backup($config, $db, $options);
   }
-  private function backup(array $config, array $db, array $options): string
-  {
+
+  private function backup(array $config, array $db, array $options): string {
     $backupDir = $config['backup_path'];
     if (!File::exists($backupDir)) {
       File::makeDirectory($backupDir, 0755, true);
@@ -88,10 +46,10 @@ class BackupService
     );
 
     $filePath = $backupDir . '/' . $fileName;
-
+    $mysql_dump_path = $config['mysql_path'] . '/mysqldump.exe';
     $cmd = sprintf(
       '"%s" --user=%s --password=%s --host=%s --port=%s %s > "%s"',
-      $config['mysqldump_path'],
+      $mysql_dump_path,
       $db['username'],
       $db['password'],
       $db['host'],
@@ -142,21 +100,170 @@ class BackupService
   }
 
   /**
-   * Delete older backup files except latest X
+   * ---------------------------------------------------------------
+   * Delete older backup files and keep only the latest X backups
+   * ---------------------------------------------------------------
+   *
+   * @param string $dir       Directory containing backup files
+   * @param int    $keepLast  Number of newest backup files to keep
+   * @param bool   $logging   Enable logging for deleted files
    */
   private function cleanupOldBackups(string $dir, int $keepLast, bool $logging): void
   {
+    /**
+     * ---------------------------------------------------------------
+     * 1. Collect all files in the directory and sort by newest first
+     * ---------------------------------------------------------------
+     */
     $files = collect(File::files($dir))
-      ->sortByDesc(fn ($file) => $file->getMTime())
+      ->sortByDesc(fn($file) => $file->getMTime()) // newest → oldest
       ->values();
 
-    $toDelete = $files->slice($keepLast);
+    /**
+     * ---------------------------------------------------------------
+     * 2. Slice the list and get only the files that should be deleted
+     * ---------------------------------------------------------------
+     */
+    $filesToDelete = $files->slice($keepLast);
 
-    foreach ($toDelete as $file) {
+    /**
+     * ---------------------------------------------------------------
+     * 3. Delete all selected files
+     * ---------------------------------------------------------------
+     */
+    foreach ($filesToDelete as $file) {
       File::delete($file->getRealPath());
+
       if ($logging) {
         Log::info("DB Backup cleanup: deleted " . $file->getFilename());
       }
+    }
+  }
+
+  /**
+   * Restore a database backup from a given file.
+   *
+   * @param array|string $config  Backup configuration options
+   * @param string       $file    Path to the backup (.sql or .zip)
+   *
+   * @return string  Status message of the restore process
+   */
+  private function restoreFromBackup(mixed $config, $file): string {
+    try {
+      /**
+       * ---------------------------------------------------------------
+       * 1. Resolve Restore File Path
+       * ---------------------------------------------------------------
+       */
+      $filePath = $config['backup_path'] . '/' . $file;
+
+      if (!File::exists($filePath)) {
+        throw new \Exception("Restore file not found: $filePath");
+      }
+
+      /**
+       * ---------------------------------------------------------------
+       * 2. Prepare Temporary Folder (for ZIP extraction)
+       * ---------------------------------------------------------------
+       */
+      $tmpDir = $config['backup_path'] . '/tmp_restore';
+      if (!is_dir($tmpDir)) {
+        mkdir($tmpDir, 0755, true);
+      }
+
+      /**
+       * ---------------------------------------------------------------
+       * 3. If backup is a ZIP, extract the SQL file
+       * ---------------------------------------------------------------
+       */
+      if (strtolower(pathinfo($filePath, PATHINFO_EXTENSION)) === 'zip') {
+
+        $zip = new \ZipArchive();
+
+        if ($zip->open($filePath) === true) {
+          // Extract contents
+          $zip->extractTo($tmpDir);
+          $zip->close();
+
+          // Expected extracted SQL file (same filename but .sql)
+          $extractedSql = $tmpDir . '/' . basename($filePath, '.zip');
+
+          if (!file_exists($extractedSql)) {
+            throw new \Exception("Extracted SQL file not found inside ZIP: $filePath");
+          }
+
+          $filePath = $extractedSql;
+        } else {
+          throw new \Exception("Failed to open ZIP backup: $filePath");
+        }
+      }
+
+      /**
+       * ---------------------------------------------------------------
+       * 4. Build MySQL Restore Command
+       * ---------------------------------------------------------------
+       */
+
+      // Escape the restore file path for safe shell execution
+      $filePathEscaped = escapeshellarg(str_replace('\\', '/', $filePath));
+
+      // MySQL binary path
+      $mysqlPath = rtrim(env('MYSQL_PATH', 'C:/xampp/mysql/bin'), '/\\') . '/mysql.exe';
+
+      // Database credentials
+      $dbHost = env('DB_HOST', '127.0.0.1');
+      $dbPort = env('DB_PORT', 3306);
+      $dbName = env('DB_DATABASE');
+      $dbUser = env('DB_USERNAME');
+      $dbPass = env('DB_PASSWORD');
+
+      if ($config['logging']) {
+        Log::info("Restoring database from: $filePath");
+      }
+
+      // Final shell command for restore
+      $cmd = sprintf(
+        '"%s" -h %s -P %s -u %s --password=%s %s < %s',
+        $mysqlPath,
+        $dbHost,
+        $dbPort,
+        $dbUser,
+        escapeshellarg($dbPass),
+        $dbName,
+        $filePathEscaped
+      );
+
+      /**
+       * ---------------------------------------------------------------
+       * 5. Execute the Restore Command
+       * ---------------------------------------------------------------
+       */
+      exec($cmd, $output, $returnVar);
+
+      if ($returnVar !== 0) {
+        throw new \Exception("Database restore failed. Command returned code $returnVar.");
+      }
+
+      if ($config['logging']) {
+        Log::info("Database successfully restored from: $filePath");
+      }
+
+      /**
+       * ---------------------------------------------------------------
+       * 6. Cleanup Temporary Files (if ZIP extracted)
+       * ---------------------------------------------------------------
+       */
+      if (isset($extractedSql) && file_exists($extractedSql)) {
+        unlink($extractedSql);
+      }
+
+      if (is_dir($tmpDir)) {
+        rmdir($tmpDir);
+      }
+
+      return 'Backup restored successfully!';
+    } catch (\Exception $e) {
+      return 'Restore failed: ' . $e->getMessage();
     }
   }
 }
