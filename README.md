@@ -68,7 +68,7 @@ return [
 
     'backup_path' => storage_path('app/db_backups'),
 
-    'mysqldump_path' => env('MYSQL_DUMP_PATH', 'mysqldump'),
+    'mysql_path' => env('MYSQL_PATH', 'C:/xampp/mysql/bin'),
 
     'filename' => 'backup_{db}_{date}.sql',
 
@@ -117,10 +117,13 @@ DB_DATABASE=your_database
 DB_USERNAME=your_user
 DB_PASSWORD=your_password
 
-MYSQL_DUMP_PATH=/usr/bin/mysqldump
+#windows
+MYSQL_PATH=C:/xampp/mysql/bin
+#linux
+MYSQL_PATH=/usr/bin
 ```
 
-> On cPanel/shared hosting: usually `/usr/bin/mysqldump`
+> On cPanel/shared hosting: usually `/usr/bin`
 > On Windows/XAMPP: `C:/xampp/mysql/bin`
 
 ---
