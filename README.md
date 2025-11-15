@@ -14,6 +14,7 @@ A lightweight Laravel package for creating MySQL database backups via CLI or sch
 * Configurable `mysqldump` path
 * Optional ZIP compression
 * Optional email notification with backup attachment
+* Restore backups from `.sql` or `.zip` files
 
 ---
 
@@ -140,16 +141,28 @@ Backup complete: storage/app/db_backups/backup_mydb_2025_11_15_173027.sql.zip
 
 ### 2. Optional Command Flags
 
-| Flag       | Description               |
-| ---------- | ------------------------- |
-| --no-zip   | Skip compression          |
-| --no-email | Skip email                |
-| --no-clean | Skip deleting old backups |
+| Flag        | Description               |
+|-------------|---------------------------|
+| --no-zip    | Skip compression          |
+| --no-email  | Skip email                |
+| --no-clean  | Skip deleting old backups |
+| --restore   | Restore the old backups   |
 
-Example:
+Backup Example:
 
 ```bash
 php artisan rast:db-backup --no-zip --no-email
+```
+
+Restore Example: 
+```bash
+php artisan rast:db-backup --restore=/path/to/backup.sql
+```
+ * Supports .sql and .zip backups
+ * Automatically extracts .zip before restoring
+
+```bash
+php artisan rast:db-backup --restore=storage/app/db_backups/backup_mydb_2025_11_15_173027.sql.zip
 ```
 
 ### 3. Scheduling Backups
@@ -169,6 +182,18 @@ Add cron entry:
 * * * * * php /path/to/artisan schedule:run >> /dev/null 2>&1
 ```
 
+
+Restore Database
+php artisan rast:db-backup --restore=/path/to/backup.sql
+
+
+Supports .sql and .zip backups
+
+Automatically extracts .zip before restoring
+
+Example:
+
+php artisan rast:db-backup --restore=storage/app/db_backups/backup_mydb_2025_11_15_173027.sql.zip
 ---
 
 ## 🔐 Security Recommendations
