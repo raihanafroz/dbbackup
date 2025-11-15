@@ -1,0 +1,26 @@
+{
+  "name": "rast/dbbackup",
+  "description": "Simple MySQL backup package for Laravel",
+  "type": "library",
+  "license": "MIT",
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "authors": [
+    {
+      "name": "Raihan Afroz",
+      "email": "raihanafroz9@gmail.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "RAST\\DbBackup\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "RAST\\DbBackup\\DbBackupServiceProvider"
+      ]
+    }
+  }
+}
