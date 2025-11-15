@@ -183,19 +183,6 @@ Add cron entry:
 ```
 
 
-Restore Database
-php artisan rast:db-backup --restore=/path/to/backup.sql
-
-
-Supports .sql and .zip backups
-
-Automatically extracts .zip before restoring
-
-Example:
-
-php artisan rast:db-backup --restore=storage/app/db_backups/backup_mydb_2025_11_15_173027.sql.zip
----
-
 ## 🔐 Security Recommendations
 
 * Limit `backup_path` permissions: `chmod 770 storage/app/db_backups`
