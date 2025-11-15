@@ -109,8 +109,8 @@ class BackupService
     // Compression
     if (!$options['no_zip'] && $config['compression']['enabled'] && $config['compression']['type'] === 'zip') {
       $zipPath = $filePath . '.zip';
-      $zip = new ZipArchive;
-      if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+      $zip = new \ZipArchive;
+      if ($zip->open($zipPath, \ZipArchive::CREATE) === TRUE) {
         $zip->addFile($filePath, basename($filePath));
         $zip->close();
         unlink($filePath);
