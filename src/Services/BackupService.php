@@ -22,6 +22,9 @@ class BackupService {
    */
   public function run(array $options = []): string {
     $config = config('dbbackup');
+    if ($config['logging']) {
+      Log::debug($config);
+    }
     $db = config('database.connections.mysql');
 
     if (!empty($options['restore'])) {
