@@ -88,18 +88,22 @@ class BackupService {
 //          ->attach($filePath);
 //      });
 
-      Mail::raw($config['email']['message'], function ($msg) use ($filePath, $config) {
+      try {
+        Mail::raw($config['email']['message'], function ($msg) use ($filePath, $config) {
 
-        $email = $config['email'];
+          $email = $config['email'];
 
-        $msg->to($email['to'])
-          ->subject($email['subject'] ?? config('app.name') . ' - Database Backup')
-          ->from(
-            $email['from_address'] ?? config('mail.from.address'),
-            $email['from_name'] ?? config('mail.from.name') ?? config('app.name')
-          )
-          ->attach($filePath);
-      });
+          $msg->to($email['to'])
+            ->subject($email['subject'] ?? config('app.name') . ' - Database Backup')
+            ->from(
+              $email['from_address'] ?? config('mail.from.address'),
+              $email['from_name'] ?? config('mail.from.name') ?? config('app.name')
+            )
+            ->attach($filePath);
+        });
+      }catch (\Exception $e){
+        Log::error($e->getMessage());
+      }
       if ($config['logging']) {
         Log::info("DB Backup emailed to: " . $config['email']['to']);
       }
