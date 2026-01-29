@@ -84,31 +84,53 @@ class BackupService {
     }
 
     // Email
-    if (!$options['no_email'] && $config['email']['enabled']) {
-//      Mail::raw($config['email']['message'], function ($msg) use ($filePath, $config) {
-//        $msg->to($config['email']['to'])
-//          ->subject($config['email']['subject'])
-//          ->attach($filePath);
-//      });
+//    if (!$options['no_email'] && $config['email']['enabled']) {
+//
+//
+//      try {
+//        Mail::raw($config['email']['message'], function ($msg) use ($filePath, $config) {
+//
+//          $email = $config['email'];
+//
+//          $msg->to($email['to'])
+//            ->subject($email['subject'] ?? config('app.name') . ' - Database Backup')
+//            ->from(
+//              $email['from_address'] ?? config('mail.from.address'),
+//              $email['from_name'] ?? config('mail.from.name') ?? config('app.name')
+//            )
+//            ->attach($filePath);
+//        });
+//      }catch (\Exception $e){
+//        Log::error($e->getMessage());
+//      }
+//      if ($config['logging']) {
+//        Log::info("DB Backup emailed to: " . $config['email']['to']);
+//      }
+//    }
+
+
+    $email = $config['email'] ?? [];
+
+    if (($email['enabled'] ?? false) && !($options['no_email'] ?? false)) {
 
       try {
-        Mail::raw($config['email']['message'], function ($msg) use ($filePath, $config) {
-
-          $email = $config['email'];
+        Mail::raw($email['message'] ?? 'Database backup attached.', function ($msg) use ($filePath, $email) {
 
           $msg->to($email['to'])
-            ->subject($email['subject'] ?? config('app.name') . ' - Database Backup')
+            ->subject(
+              $email['subject'] ?? config('app.name') . ' - Database Backup'
+            )
             ->from(
               $email['from_address'] ?? config('mail.from.address'),
               $email['from_name'] ?? config('mail.from.name') ?? config('app.name')
             )
             ->attach($filePath);
         });
-      }catch (\Exception $e){
-        Log::error($e->getMessage());
-      }
-      if ($config['logging']) {
-        Log::info("DB Backup emailed to: " . $config['email']['to']);
+
+        Log::info('DB Backup emailed to: ' . $email['to']);
+
+      } catch (\Throwable $e) {
+        Log::error('DB Backup email failed: ' . $e->getMessage());
       }
     }
 
