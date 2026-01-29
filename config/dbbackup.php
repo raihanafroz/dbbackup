@@ -26,7 +26,7 @@ return [
   |   MYSQL_PATH="C:/xampp/mysql/bin"
   |
   |  On cPanel/shared hosting: usually
-  |   MYSQL_PATH="/usr/bin/mysqldump"
+  |   MYSQL_PATH="/usr/bin"
   */
 
   'mysql_path' => env('MYSQL_PATH', 'C:/xampp/mysql/bin'),
@@ -92,9 +92,11 @@ return [
 
   'email' => [
     'enabled' => false,
-    'to' => 'admin@example.com',
+    'from_name' => 'RAST',
+    'from_address' => 'no-reply@nrast.com',
+    'to' => 'admin@nrast.com',
     'subject' => 'Database Backup',
-    'message' => 'Your scheduled database backup is attached.',
+    'message' => 'Your database backup is attached.',
   ],
 
 

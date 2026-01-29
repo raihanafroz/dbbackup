@@ -16,6 +16,7 @@
       "RAST\\DbBackup\\": "src/"
     }
   },
+  "require": {},
   "extra": {
     "laravel": {
       "providers": [

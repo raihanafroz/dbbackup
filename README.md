@@ -84,9 +84,11 @@ return [
 
     'email' => [
         'enabled' => false,
-        'to' => 'admin@example.com',
+        'from_name' => 'RAST',
+        'from_address' => 'no-reply@nrast.com',
+        'to' => 'admin@nrast.com',
         'subject' => 'Database Backup',
-        'message' => 'Your scheduled database backup is attached.',
+        'message' => 'Your database backup is attached.',
     ],
 
     'logging' => true,

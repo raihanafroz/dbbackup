@@ -46,7 +46,8 @@ class BackupService {
     );
 
     $filePath = $backupDir . '/' . $fileName;
-    $mysql_dump_path = $config['mysql_path'] . '/mysqldump.exe';
+    $mysql_dump_path = rtrim($config['mysql_path'], '/')
+      . (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? '/mysqldump.exe' : '/mysqldump');
     $cmd = sprintf(
       '"%s" --user=%s --password=%s --host=%s --port=%s %s > "%s"',
       $mysql_dump_path,
@@ -81,9 +82,22 @@ class BackupService {
 
     // Email
     if (!$options['no_email'] && $config['email']['enabled']) {
+//      Mail::raw($config['email']['message'], function ($msg) use ($filePath, $config) {
+//        $msg->to($config['email']['to'])
+//          ->subject($config['email']['subject'])
+//          ->attach($filePath);
+//      });
+
       Mail::raw($config['email']['message'], function ($msg) use ($filePath, $config) {
-        $msg->to($config['email']['to'])
-          ->subject($config['email']['subject'])
+
+        $email = $config['email'];
+
+        $msg->to($email['to'])
+          ->subject($email['subject'] ?? config('app.name') . ' - Database Backup')
+          ->from(
+            $email['from_address'] ?? config('mail.from.address'),
+            $email['from_name'] ?? config('mail.from.name') ?? config('app.name')
+          )
           ->attach($filePath);
       });
       if ($config['logging']) {
